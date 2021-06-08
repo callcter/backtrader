@@ -69,6 +69,7 @@ class PositionsValue(bt.Analyzer):
         if self.p.headers:
             headers = [d._name or 'Data%d' % i
                        for i, d in enumerate(self.datas)]
+            
             self.rets['Datetime'] = headers + ['cash'] * self.p.cash
 
         tf = min(d._timeframe for d in self.datas)
@@ -83,3 +84,4 @@ class PositionsValue(bt.Analyzer):
             self.rets[self.strategy.datetime.date()] = pvals
         else:
             self.rets[self.strategy.datetime.datetime()] = pvals
+    

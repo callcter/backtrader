@@ -26,11 +26,13 @@ import collections
 
 import backtrader as bt
 from backtrader.utils.py3 import items, iteritems
+import pandas as pd 
 
 from . import TimeReturn, PositionsValue, Transactions, GrossLeverage
 
 
 class PyFolio(bt.Analyzer):
+
     '''This analyzer uses 4 children analyzers to collect data and transforms it
     in to a data set compatible with ``pyfolio``
 
@@ -113,24 +115,22 @@ class PyFolio(bt.Analyzer):
         The method will break if ``pandas`` is not installed
         '''
         # keep import local to avoid disturbing installations with no pandas
-        import pandas
-        from pandas import DataFrame as DF
-
-        #
         # Returns
         cols = ['index', 'return']
-        returns = DF.from_records(iteritems(self.rets['returns']),
+        returns = pd.DataFrame.from_records(iteritems(self.rets['returns']),
                                   index=cols[0], columns=cols)
-        returns.index = pandas.to_datetime(returns.index)
+        returns.index = pd.to_datetime(returns.index)
         returns.index = returns.index.tz_localize('UTC')
         rets = returns['return']
         #
         # Positions
         pss = self.rets['positions']
-        ps = [[k] + v[-2:] for k, v in iteritems(pss)]
+        # ps = [[k] + v[-2:] for k, v in iteritems(pss)]
+        ps = [[k] + v for k, v in iteritems(pss)]
         cols = ps.pop(0)  # headers are in the first entry
-        positions = DF.from_records(ps, index=cols[0], columns=cols)
-        positions.index = pandas.to_datetime(positions.index)
+        positions = pd.DataFrame.from_records(ps[1:], columns=cols)
+        positions.index = pd.to_datetime(positions['Datetime'])
+        del positions['Datetime']
         positions.index = positions.index.tz_localize('UTC')
 
         #
@@ -146,16 +146,16 @@ class PyFolio(bt.Analyzer):
                 txs.append([k] + v2)
 
         cols = txs.pop(0)  # headers are in the first entry
-        transactions = DF.from_records(txs, index=cols[0], columns=cols)
-        transactions.index = pandas.to_datetime(transactions.index)
+        transactions = pd.DataFrame.from_records(txs, index=cols[0], columns=cols)
+        transactions.index = pd.to_datetime(transactions.index)
         transactions.index = transactions.index.tz_localize('UTC')
 
         # Gross Leverage
         cols = ['index', 'gross_lev']
-        gross_lev = DF.from_records(iteritems(self.rets['gross_lev']),
+        gross_lev = pd.DataFrame.from_records(iteritems(self.rets['gross_lev']),
                                     index=cols[0], columns=cols)
 
-        gross_lev.index = pandas.to_datetime(gross_lev.index)
+        gross_lev.index = pd.to_datetime(gross_lev.index)
         gross_lev.index = gross_lev.index.tz_localize('UTC')
         glev = gross_lev['gross_lev']
 
